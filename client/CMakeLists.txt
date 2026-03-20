@@ -1,0 +1,37 @@
+cmake_minimum_required(VERSION 3.8.0)
+project(argos3_controller)
+
+# Set the compilation type
+if(CMAKE_BUILD_TYPE STREQUAL "")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel ..." FORCE)
+endif(CMAKE_BUILD_TYPE STREQUAL "")
+
+# Deactivate RPATH for MacOSX
+set(CMAKE_MACOSX_RPATH 0)
+
+# Set the path where CMake will find additional scripts
+set(CMAKE_MODULE_PATH $ENV{CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+set(CMAKE_PREFIX_PATH $ENV{CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+
+# Use C++20
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Find the ARGoS package, make sure to save the ARGoS prefix
+find_package(ARGoS REQUIRED)
+include_directories(${CMAKE_SOURCE_DIR} ${ARGOS_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/client)
+link_directories(${ARGOS_LIBRARY_DIR})
+link_libraries(${ARGOS_LDFLAGS})
+
+add_subdirectory(externalDependencies/rpclib)
+include_directories(externalDependencies/rpclib/include)
+
+# Descend into the controllers directory
+add_subdirectory(controllers)
+
+# Descend into the loop_functions directory
+add_subdirectory(loop_functions)
+
+# Descend into the utils directory
+add_subdirectory(utils)
