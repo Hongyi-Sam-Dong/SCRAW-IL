@@ -10,7 +10,7 @@ import datetime
 
 from typing import List, Tuple
 from ArgosConfig import (SERVER_EXE, PBS_EXE, TPBS_EXE,
-                                             RHCR_EXE, MASS_EXE,
+                                             RHCR_EXE, MASS_EXE, SILLM_EXE,
                                              CONTAINER_PROJECT_ROOT,
                                              PROJECT_ROOT, setup_logging)
 from ArgosConfig.ToArgos import (obstacles, parse_map_file,
@@ -161,6 +161,7 @@ def run_lifelong_argos(
             - ``MASS``: the MAPF-SSIPP-SPS planner, (`Yan et al. 2025`_). MASS plans for full-horizon paths with 2nd order dynamics for all robots.
             - ``PBS``: the Priority-Based Search planner (`Ma et al. 2019`_). PBS plans for full-horizon paths for all robots.
             - ``TPBS``: the `Transient` Priority-Based Search planner (`Morag et al. 2025`_). TPBS plans for full-horizon paths for all robots even if there are duplicate goals.
+            - ``SILLM``: the Scalable Imitation Learning for Lifelong Multi-Agent Path Finding planner.
 
             Defaults to ``RHCR``.
         container (bool, optional): whether to run in a `singularity`_ container. Defaults to False.
@@ -171,6 +172,7 @@ def run_lifelong_argos(
             - ``PIBT``: the Priority Inheritance with Backtracking, (`Okumura et al. 2019`_).
             - ``LRA``: the Local Repair Guided Waits, (`Li et al. 2021`_).
             - ``GuidedPIBT``: Guided PIBT, (`Chen et al. 2024`_).
+            - ``SILLM``: the Scalable Imitation Learning for Lifelong Multi-Agent Path Finding solver.
 
             Defaults to ``PIBT``.
         planner_invoke_policy (str, optional): planner invocation policy, options include:
@@ -300,12 +302,14 @@ def run_lifelong_argos(
         tpbs_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / TPBS_EXE
         rhcr_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / RHCR_EXE
         mass_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / MASS_EXE
+        sillm_path = pathlib.Path(CONTAINER_PROJECT_ROOT) / SILLM_EXE
     else:
         server_path = pathlib.Path(PROJECT_ROOT) / SERVER_EXE
         pbs_path = pathlib.Path(PROJECT_ROOT) / PBS_EXE
         tpbs_path = pathlib.Path(PROJECT_ROOT) / TPBS_EXE
         rhcr_path = pathlib.Path(PROJECT_ROOT) / RHCR_EXE
         mass_path = pathlib.Path(PROJECT_ROOT) / MASS_EXE
+        sillm_path = pathlib.Path(PROJECT_ROOT) / SILLM_EXE
 
     try:
         # print("Running simulator ...")
@@ -404,6 +408,17 @@ def run_lifelong_argos(
                 f"--simulation_window={sim_window_tick / ticks_per_second}",
                 f"--cutoffTime={cutoffTime}",
                 f"--saveInstance={False}",
+            ]
+        # SILLM planner
+        elif planner == "SILLM":
+            planner_command = [
+                sillm_path,
+                f"--map={map_filepath}",
+                f"--agentNum={num_agents}",
+                f"--portNum={port_num}",
+                f"--seed={seed}",
+                f"--screen={screen}",
+                f"--cutoffTime={cutoffTime}",
             ]
         else:
             logger.error(f"Unknown planner: {planner}")
