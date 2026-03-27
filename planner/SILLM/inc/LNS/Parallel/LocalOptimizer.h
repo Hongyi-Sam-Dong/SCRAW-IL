@@ -3,7 +3,6 @@
 #include "util/HeuristicTable.h"
 #include "util/TimeLimiter.h"
 #include "LNS/Parallel/TimeSpaceAStarPlanner.h"
-#include "LaCAM2/instance.hpp"
 
 namespace LNS {
 
@@ -22,7 +21,7 @@ public:
 
     std::mt19937 MT; 
 
-    std::shared_ptr<std::vector<LaCAM2::AgentInfo> > agent_infos;
+    std::shared_ptr<std::vector<LNS::AgentInfo> > agent_infos;
 
     std::vector<Neighbor> updating_queue;
 
@@ -37,7 +36,7 @@ public:
 
     LocalOptimizer(
         Instance & instance, std::vector<Agent> & agents, std::shared_ptr<HeuristicTable> HT, 
-        std::shared_ptr<vector<float> > map_weights, std::shared_ptr<std::vector<LaCAM2::AgentInfo> > agent_infos,
+        std::shared_ptr<vector<float> > map_weights, std::shared_ptr<std::vector<LNS::AgentInfo> > agent_infos,
         string replan_algo_name, bool sipp,
         int window_size_for_CT, int window_size_for_CAT, int window_size_for_PATH, int execution_window,
         bool has_disable_agents,

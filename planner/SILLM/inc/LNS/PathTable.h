@@ -1,5 +1,5 @@
 #pragma once
-#include "LNS/common.h"
+#include "common.h"
 #include "LNS/Parallel/DataStructure.h"
 
 #define NO_AGENT -1

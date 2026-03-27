@@ -4,7 +4,6 @@
 #include "LNS/Parallel/LocalOptimizer.h"
 #include "util/TimeLimiter.h"
 #include <memory>
-#include "LaCAM2/instance.hpp"
 #include <omp.h>
 #include <climits>
 
@@ -40,7 +39,7 @@ public:
     int num_threads;
     int max_iterations;
 
-    std::shared_ptr<std::vector<LaCAM2::AgentInfo> > agent_infos;
+    std::shared_ptr<std::vector<LNS::AgentInfo> > agent_infos;
 
     std::vector<std::vector<Neighbor>> updating_queues; // the generated neighbors for usage
     std::vector<omp_lock_t> updating_queue_locks;
@@ -52,7 +51,7 @@ public:
     GlobalManager(
         bool async,
         Instance & instance, std::shared_ptr<HeuristicTable> HT, 
-        std::shared_ptr<vector<float> > map_weights, std::shared_ptr<std::vector<LaCAM2::AgentInfo> > agent_infos,
+        std::shared_ptr<vector<float> > map_weights, std::shared_ptr<std::vector<LNS::AgentInfo> > agent_infos,
         int neighbor_size, destroy_heuristic destroy_strategy,
         bool ALNS, double decay_factor, double reaction_factor,
         string init_algo_name, string replan_algo_name, bool sipp,

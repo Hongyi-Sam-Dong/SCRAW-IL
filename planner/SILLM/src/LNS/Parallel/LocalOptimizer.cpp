@@ -8,7 +8,7 @@ namespace Parallel {
 
 LocalOptimizer::LocalOptimizer(
     Instance & instance, std::vector<Agent> & agents, std::shared_ptr<HeuristicTable> HT, 
-    std::shared_ptr<vector<float> > map_weights, std::shared_ptr<std::vector<LaCAM2::AgentInfo> > agent_infos,
+    std::shared_ptr<vector<float> > map_weights, std::shared_ptr<std::vector<LNS::AgentInfo> > agent_infos,
     string replan_algo_name, bool sipp,
     int window_size_for_CT, int window_size_for_CAT, int window_size_for_PATH, int execution_window,
     bool has_disabled_agents,

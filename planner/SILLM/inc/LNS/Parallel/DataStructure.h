@@ -1,7 +1,7 @@
 #pragma once
 #include "common.h"
 #include "LNS/Instance.h"
-#include "LaCAM2/instance.hpp"
+#include "util/HeuristicTable.h"
 
 namespace LNS {
 
@@ -42,9 +42,9 @@ struct Agent
     const Instance & instance;
     std::shared_ptr<HeuristicTable> HT; // instance
 
-    std::shared_ptr<std::vector<LaCAM2::AgentInfo> > agent_infos;
+    std::shared_ptr<std::vector<LNS::AgentInfo> > agent_infos;
 
-    Agent(int id, const Instance& instance, std::shared_ptr<HeuristicTable> & HT, std::shared_ptr<std::vector<LaCAM2::AgentInfo> > &agent_infos): 
+    Agent(int id, const Instance& instance, std::shared_ptr<HeuristicTable> & HT, std::shared_ptr<std::vector<LNS::AgentInfo> > &agent_infos): 
         id(id), HT(HT), instance(instance), agent_infos(agent_infos) {
 
     }

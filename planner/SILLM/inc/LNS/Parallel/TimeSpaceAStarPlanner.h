@@ -3,7 +3,6 @@
 #include "boost/unordered_set.hpp"
 #include "LNS/Instance.h"
 #include <utility>
-#include "LNS/ConstraintTable.h"
 #include "util/HeuristicTable.h"
 #include "LNS/Parallel/DataStructure.h"
 #include "util/TimeLimiter.h"

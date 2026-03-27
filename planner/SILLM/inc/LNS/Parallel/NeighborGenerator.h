@@ -4,7 +4,6 @@
 #include "util/TimeLimiter.h"
 #include "util/HeuristicTable.h"
 #include "LNS/PathTable.h"
-#include "LaCAM2/instance.hpp"
 
 namespace LNS {
 
@@ -20,7 +19,7 @@ public:
 
     std::mt19937 MT; 
 
-    std::shared_ptr<std::vector<LaCAM2::AgentInfo> > agent_infos;
+    std::shared_ptr<std::vector<LNS::AgentInfo> > agent_infos;
 
     int neighbor_size; // the size of the generated neighbor
     destroy_heuristic destroy_strategy;
@@ -52,7 +51,7 @@ public:
 
     NeighborGenerator(
         Instance & instance, std::shared_ptr<HeuristicTable> HT, PathTable & path_table, 
-        std::vector<Agent> & agents, std::shared_ptr<std::vector<LaCAM2::AgentInfo> > agent_infos,
+        std::vector<Agent> & agents, std::shared_ptr<std::vector<LNS::AgentInfo> > agent_infos,
         int neighbor_size, destroy_heuristic destroy_strategy, 
         bool ALNS, double decay_factor, double reaction_factor, 
         int num_threads, bool fix_ng_bug, int screen, int random_seed

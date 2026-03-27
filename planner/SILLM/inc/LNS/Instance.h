@@ -4,6 +4,19 @@
 #include "States.h"
 
 namespace LNS {
+
+struct AgentInfo {
+public:
+    int goal_location;
+    float elapsed;
+    float tie_breaker;
+    int id;
+    int stuck_order;
+    bool disabled;
+	float cost_weight;
+
+    AgentInfo():id(-1),goal_location(-1),elapsed(-1),tie_breaker(-1), stuck_order(0), disabled(false), cost_weight(1.0) {};
+};
 	
 // Currently only works for undirected unweighted 4-nighbor grids
 class Instance 
