@@ -8,7 +8,7 @@ using State=TimeSpaceAStarState;
 
 TimeSpaceAStarPlanner::TimeSpaceAStarPlanner(Instance & instance, std::shared_ptr<HeuristicTable> HT, std::shared_ptr<vector<float> > weights, int execution_window): instance(instance), HT(HT), weights(weights), execution_window(execution_window) {};
 
-void TimeSpaceAStarPlanner::findPath(int start_pos, int start_orient, int goal_pos, ConstraintTable & constraint_table, const TimeLimiter & time_limiter) {
+void TimeSpaceAStarPlanner::findPath(int start_pos, int start_orient, int goal_pos, PathTable & path_table, const TimeLimiter & time_limiter) {
     clear();
 
     // at the beginning, we alway assume the agent havn't arrived its goal, even its start location are the same as the goal location. because we need at least length 2 path.
@@ -31,18 +31,18 @@ void TimeSpaceAStarPlanner::findPath(int start_pos, int start_orient, int goal_p
         curr->closed=true;
         ++n_expanded;
 
-        if (execution_window==1 && curr->pos==goal_pos && curr->t>=1 && !constraint_table.constrained(curr->pos, curr->t)) {
+        if (execution_window==1 && curr->pos==goal_pos && curr->t>=1 && !path_table.constrained(curr->pos, curr->pos, curr->t)) {
             buildPath(curr,goal_pos);
             return;
         }
 
-        if (curr->t>=constraint_table.window_size_for_PATH) {
+        if (curr->t>=path_table.window_size) {
             // std::cerr<<"collision: "<<curr->num_of_conflicts<<std::endl;
             buildPath(curr,goal_pos);
             return;
         }
 
-        getSuccessors(curr, goal_pos, constraint_table);
+        getSuccessors(curr, goal_pos, path_table);
         for (auto & next_state: successors) {
             ++n_generated;
             auto iter = all_states.find(next_state);
@@ -105,7 +105,7 @@ void TimeSpaceAStarPlanner::buildPath(State * curr, int goal_pos) {
     std::reverse(path.nodes.begin(), path.nodes.end());
 }
 
-void TimeSpaceAStarPlanner::getSuccessors(State * curr, int goal_pos, ConstraintTable & constraint_table) {
+void TimeSpaceAStarPlanner::getSuccessors(State * curr, int goal_pos, PathTable & path_table) {
     successors.clear();
 
     int & cols=instance.num_of_cols;
@@ -134,10 +134,10 @@ void TimeSpaceAStarPlanner::getSuccessors(State * curr, int goal_pos, Constraint
         if (x+1<cols){
             next_pos=pos+1;
             weight_idx=pos*n_dirs;
-            if (map[next_pos]==0 && !constraint_table.path_table_for_CT->constrained(pos,next_pos,next_timestep)) {
+            if (map[next_pos]==0 && !path_table.constrained(pos,next_pos,next_timestep)) {
                 next_g=curr->g+weights[weight_idx];
                 next_h=curr->arrived?0:HT->get(next_pos, next_orient, goal_pos);
-                next_num_of_conflicts=curr->num_of_conflicts+constraint_table.getNumOfConflictsForStep(curr->pos, next_pos, next_timestep);
+                next_num_of_conflicts=0;
                 next_arrived=curr->arrived | (next_pos==goal_pos);
                 successors.push_back(new State(next_pos, next_orient, next_timestep, next_g, next_h, next_num_of_conflicts, next_arrived, curr));
             }
@@ -147,10 +147,10 @@ void TimeSpaceAStarPlanner::getSuccessors(State * curr, int goal_pos, Constraint
         if (y+1<rows) {
             next_pos=pos+cols;
             weight_idx=pos*n_dirs+1;
-            if (map[next_pos]==0 && !constraint_table.path_table_for_CT->constrained(pos,next_pos,next_timestep)) {
+            if (map[next_pos]==0 && !path_table.constrained(pos,next_pos,next_timestep)) {
                 next_g=curr->g+weights[weight_idx];
                 next_h=curr->arrived?0:HT->get(next_pos, next_orient, goal_pos);
-                next_num_of_conflicts=curr->num_of_conflicts+constraint_table.getNumOfConflictsForStep(curr->pos, next_pos, next_timestep);
+                next_num_of_conflicts=0;
                 next_arrived=curr->arrived | (next_pos==goal_pos);
                 successors.push_back(new State(next_pos, next_orient, next_timestep, next_g, next_h, next_num_of_conflicts, next_arrived, curr));
             }
@@ -160,10 +160,10 @@ void TimeSpaceAStarPlanner::getSuccessors(State * curr, int goal_pos, Constraint
         if (x-1>=0) {
             next_pos=pos-1;
             weight_idx=pos*n_dirs+2;
-            if (map[next_pos]==0 && !constraint_table.path_table_for_CT->constrained(pos,next_pos,next_timestep)) {
+            if (map[next_pos]==0 && !path_table.constrained(pos,next_pos,next_timestep)) {
                 next_g=curr->g+weights[weight_idx];
                 next_h=curr->arrived?0:HT->get(next_pos, next_orient, goal_pos);
-                next_num_of_conflicts=curr->num_of_conflicts+constraint_table.getNumOfConflictsForStep(curr->pos, next_pos, next_timestep);
+                next_num_of_conflicts=0;
                 next_arrived=curr->arrived | (next_pos==goal_pos);
                 successors.push_back(new State(next_pos, next_orient, next_timestep, next_g, next_h, next_num_of_conflicts, next_arrived, curr));
             }
@@ -173,10 +173,10 @@ void TimeSpaceAStarPlanner::getSuccessors(State * curr, int goal_pos, Constraint
         if (y-1>=0) {
             next_pos=pos-cols;
             weight_idx=pos*n_dirs+3;
-            if (map[next_pos]==0 && !constraint_table.path_table_for_CT->constrained(pos,next_pos,next_timestep)) {
+            if (map[next_pos]==0 && !path_table.constrained(pos,next_pos,next_timestep)) {
                 next_g=curr->g+weights[weight_idx];
                 next_h=curr->arrived?0:HT->get(next_pos, next_orient, goal_pos);
-                next_num_of_conflicts=curr->num_of_conflicts+constraint_table.getNumOfConflictsForStep(curr->pos, next_pos, next_timestep);
+                next_num_of_conflicts=0;
                 next_arrived=curr->arrived | (next_pos==goal_pos);
                 successors.push_back(new State(next_pos, next_orient, next_timestep, next_g, next_h, next_num_of_conflicts, next_arrived, curr));
             }
@@ -189,11 +189,11 @@ void TimeSpaceAStarPlanner::getSuccessors(State * curr, int goal_pos, Constraint
 
     // for actions that don't change the position
     next_pos=pos;
-    if (!constraint_table.path_table_for_CT->constrained(pos,next_pos,next_timestep)) {
+    if (!path_table.constrained(pos,next_pos,next_timestep)) {
 
         weight_idx=pos*n_dirs+4;
         next_g=curr->g+weights[weight_idx];
-        next_num_of_conflicts=curr->num_of_conflicts+constraint_table.getNumOfConflictsForStep(curr->pos, next_pos, next_timestep);
+        next_num_of_conflicts=0;
         next_arrived=curr->arrived | (next_pos==goal_pos);
 
         // CR
@@ -218,10 +218,10 @@ void TimeSpaceAStarPlanner::getSuccessors(State * curr, int goal_pos, Constraint
     if (x+1<cols){
         next_pos=pos+1;
         weight_idx=pos*n_dirs;
-        if (map[next_pos]==0 && !constraint_table.path_table_for_CT->constrained(pos,next_pos,next_timestep)) {
+        if (map[next_pos]==0 && !path_table.constrained(pos,next_pos,next_timestep)) {
             next_g=curr->g+weights[weight_idx];
             next_h=curr->arrived?0:HT->get(next_pos, goal_pos);
-            next_num_of_conflicts=curr->num_of_conflicts+constraint_table.getNumOfConflictsForStep(curr->pos, next_pos, next_timestep);
+            next_num_of_conflicts=0;
             next_arrived=curr->arrived | (next_pos==goal_pos);
             successors.push_back(new State(next_pos, next_orient, next_timestep, next_g, next_h, next_num_of_conflicts, next_arrived, curr));
         }
@@ -231,10 +231,10 @@ void TimeSpaceAStarPlanner::getSuccessors(State * curr, int goal_pos, Constraint
     if (y+1<rows) {
         next_pos=pos+cols;
         weight_idx=pos*n_dirs+1;
-        if (map[next_pos]==0 && !constraint_table.path_table_for_CT->constrained(pos,next_pos,next_timestep)) {
+        if (map[next_pos]==0 && !path_table.constrained(pos,next_pos,next_timestep)) {
             next_g=curr->g+weights[weight_idx];
             next_h=curr->arrived?0:HT->get(next_pos, goal_pos);
-            next_num_of_conflicts=curr->num_of_conflicts+constraint_table.getNumOfConflictsForStep(curr->pos, next_pos, next_timestep);
+            next_num_of_conflicts=0;
             next_arrived=curr->arrived | (next_pos==goal_pos);
             successors.push_back(new State(next_pos, next_orient, next_timestep, next_g, next_h, next_num_of_conflicts, next_arrived, curr));
         }
@@ -244,10 +244,10 @@ void TimeSpaceAStarPlanner::getSuccessors(State * curr, int goal_pos, Constraint
     if (x-1>=0) {
         next_pos=pos-1;
         weight_idx=pos*n_dirs+2;
-        if (map[next_pos]==0 && !constraint_table.path_table_for_CT->constrained(pos,next_pos,next_timestep)) {
+        if (map[next_pos]==0 && !path_table.constrained(pos,next_pos,next_timestep)) {
             next_g=curr->g+weights[weight_idx];
             next_h=curr->arrived?0:HT->get(next_pos, goal_pos);
-            next_num_of_conflicts=curr->num_of_conflicts+constraint_table.getNumOfConflictsForStep(curr->pos, next_pos, next_timestep);
+            next_num_of_conflicts=0;
             next_arrived=curr->arrived | (next_pos==goal_pos);
             successors.push_back(new State(next_pos, next_orient, next_timestep, next_g, next_h, next_num_of_conflicts, next_arrived, curr));
         }
@@ -257,10 +257,10 @@ void TimeSpaceAStarPlanner::getSuccessors(State * curr, int goal_pos, Constraint
     if (y-1>=0) {
         next_pos=pos-cols;
         weight_idx=pos*n_dirs+3;
-        if (map[next_pos]==0 && !constraint_table.path_table_for_CT->constrained(pos,next_pos,next_timestep)) {
+        if (map[next_pos]==0 && !path_table.constrained(pos,next_pos,next_timestep)) {
             next_g=curr->g+weights[weight_idx];
             next_h=curr->arrived?0:HT->get(next_pos, goal_pos);
-            next_num_of_conflicts=curr->num_of_conflicts+constraint_table.getNumOfConflictsForStep(curr->pos, next_pos, next_timestep);
+            next_num_of_conflicts=0;
             next_arrived=curr->arrived | (next_pos==goal_pos);
             successors.push_back(new State(next_pos, next_orient, next_timestep, next_g, next_h, next_num_of_conflicts, next_arrived, curr));
         }
@@ -269,10 +269,10 @@ void TimeSpaceAStarPlanner::getSuccessors(State * curr, int goal_pos, Constraint
     // W
     next_pos=pos;
     weight_idx=pos*n_dirs+4;    
-    if (!constraint_table.path_table_for_CT->constrained(pos,next_pos,next_timestep)) {
+    if (!path_table.constrained(pos,next_pos,next_timestep)) {
         next_g=curr->g+weights[weight_idx];
         next_h=curr->arrived?0:HT->get(next_pos, goal_pos);
-        next_num_of_conflicts=curr->num_of_conflicts+constraint_table.getNumOfConflictsForStep(curr->pos, next_pos, next_timestep);
+        next_num_of_conflicts=0;
         next_arrived=curr->arrived | (next_pos==goal_pos);
         successors.push_back(new State(next_pos, next_orient, next_timestep, next_g, next_h, next_num_of_conflicts, next_arrived, curr));
     }
