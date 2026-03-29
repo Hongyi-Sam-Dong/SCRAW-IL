@@ -126,6 +126,8 @@ std::vector<int> WPPLSolver::solve(
     }
 
     // call pibt multiple times
+    // TODO: things like action_choices are defined in multiple places, we should unify them.
+    // see env or simulator.
     std::vector<int> action_choices={0,1,1,0,0,-1,-1,0,0,0};
     std::vector<int> map_size={env->rows,env->cols};
     std::vector<float> priorities;

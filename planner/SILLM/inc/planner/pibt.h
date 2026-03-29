@@ -11,25 +11,25 @@
 
 namespace Planner {
 
-// we have a better way to do this https://stackoverflow.com/a/53634099/24018910
-std::vector<int> sort_with_probs(std::vector<float> probs, std::mt19937 & gen) {
-    boost::random::discrete_distribution<> dist(probs);
-    std::vector<int> samples;
-    for (auto i = 0; i < probs.size(); i++) {
-        int sample = dist(gen);
-        samples.push_back(sample);
-        probs[sample] = 0;
-        dist = boost::random::discrete_distribution<>(probs);
-    }
-
-    return samples;
-}
-
 class PIBTSolver {
 public:
     PIBTSolver(size_t random_seed=0): rng(random_seed) {}
 
     std::mt19937 rng;
+
+    // we have a better way to do this https://stackoverflow.com/a/53634099/24018910
+    std::vector<int> sort_with_probs(std::vector<float> probs, std::mt19937 & gen) {
+        boost::random::discrete_distribution<> dist(probs);
+        std::vector<int> samples;
+        for (auto i = 0; i < probs.size(); i++) {
+            int sample = dist(gen);
+            samples.push_back(sample);
+            probs[sample] = 0;
+            dist = boost::random::discrete_distribution<>(probs);
+        }
+
+        return samples;
+    }
 
     // locations: num_agents*2
     // heuristics: num_agents*action_dim, if an action is invalid, the heuristic should be < 0
