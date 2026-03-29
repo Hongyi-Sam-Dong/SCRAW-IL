@@ -61,19 +61,19 @@ using json = nlohmann::json;
 #define MAX_NODES INT_MAX / 2
 #define WEIGHT_MAX INT_MAX / 2
 
-struct PathEntry {
-    int location = -1;
-    int task_id = -1;  // task id of the task that this location belongs to
-    explicit PathEntry(int loc = -1) : location(loc) {
-    }
-};
+// struct PathEntry {
+//     int location = -1;
+//     int task_id = -1;  // task id of the task that this location belongs to
+//     explicit PathEntry(int loc = -1) : location(loc) {
+//     }
+// };
 
-typedef vector<PathEntry> Path;
-std::ostream& operator<<(std::ostream& os, const Path& path);
+// typedef vector<PathEntry> Path;
+// std::ostream& operator<<(std::ostream& os, const Path& path);
 
-bool isSamePath(const Path& p1, const Path& p2);
+// bool isSamePath(const Path& p1, const Path& p2);
 
-bool congested(const vector<vector<tuple<int, int, double, int>>>& new_plan);
+// bool congested(const vector<vector<tuple<int, int, double, int>>>& new_plan);
 
 // Only for three-tuples of std::hash-able types for simplicity.
 // You can of course template this struct to allow other hash functions

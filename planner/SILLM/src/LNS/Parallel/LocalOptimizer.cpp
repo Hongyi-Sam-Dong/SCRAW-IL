@@ -83,7 +83,7 @@ void LocalOptimizer::optimize(Neighbor & neighbor, const TimeLimiter & time_limi
     }
     if (!succ) {
         if (screen>=1)
-            DEV_DEBUG("replan failed");
+            cerr<<"replan failed"<<endl;
     }
     //ONLYDEV(g_timer.record_d("replan_s","replan_e","replan");)
 
@@ -113,11 +113,10 @@ bool LocalOptimizer::runPP(Neighbor & neighbor, const TimeLimiter & time_limiter
     int remaining_agents = (int)shuffled_agents.size();
     auto p = shuffled_agents.begin();
     neighbor.sum_of_costs = 0;
-    CBSNode node;
     int suboptimality=1.2;
     int search_priority=1;
     bool use_soft_constraint=true;
-    ConstraintTable constraint_table(instance.num_of_cols, instance.map_size, &path_table, nullptr, window_size_for_CT, window_size_for_CAT, window_size_for_PATH);
+    // ConstraintTable constraint_table(instance.num_of_cols, instance.map_size, &path_table, nullptr, window_size_for_CT, window_size_for_CAT, window_size_for_PATH);
 
     // TODO(rivers): we require the path to be at least window_size_for_PATH
     // TODO(rivers): we use hold goal location assumption here, which is not necessary.
@@ -140,7 +139,7 @@ bool LocalOptimizer::runPP(Neighbor & neighbor, const TimeLimiter & time_limiter
                  << "Agent " << agents[id].id << endl;
         if (search_priority==1) {
             //ONLYDEV(g_timer.record_p("findPath_s");)
-            path_planner->findPath(start_pos,start_orient,goal_pos,constraint_table, time_limiter);
+            path_planner->findPath(start_pos,start_orient, goal_pos, path_table, time_limiter);
             neighbor.m_paths[id] = path_planner->path;
             //ONLYDEV(g_timer.record_d("findPath_s","findPath_e","findPath");)
         } else if (search_priority==2) {
@@ -165,14 +164,11 @@ bool LocalOptimizer::runPP(Neighbor & neighbor, const TimeLimiter & time_limiter
         // }
 
         if (neighbor.m_paths[id].back().location!=agents[id].getGoalLocation()) {
-            if (neighbor.m_paths[id].size()!=constraint_table.window_size_for_PATH+1) {
-                std::cerr<<"agent "<<agents[id].id<<"'s path length "<<neighbor.m_paths[id].size()<<" should be equal to window size for path "<<constraint_table.window_size_for_PATH<< "if it doesn't arrive at its goal"<<endl;
+            if (neighbor.m_paths[id].size()!=path_table.window_size+1) {
+                std::cerr<<"agent "<<agents[id].id<<"'s path length "<<neighbor.m_paths[id].size()<<" should be equal to window size for path "<<path_table.window_size<< "if it doesn't arrive at its goal"<<endl;
                 exit(-1);
             } 
         }
-
-        // padding 
-
 
         // float _path = agents[id].getEstimatedPathLength(neighbor.m_paths[id], goal_pos, HT);
         // if (_path!=neighbor.m_paths[id].path_cost) {
