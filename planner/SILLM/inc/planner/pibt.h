@@ -162,7 +162,8 @@ public:
     std::vector<int> solve(
             HeuristicTable & h_table,
             std::vector<float> & priorities, 
-            std::vector<int> & locations, 
+            std::vector<int> & locations,
+            std::vector<int> & goal_locations, 
             std::vector<int> & action_choices,
             std::vector<int> & map_size,
             bool sampling
@@ -184,6 +185,9 @@ public:
         for (int agent_idx=0;agent_idx<num_agents;++agent_idx) {
             int y=locations[agent_idx*2];
             int x=locations[agent_idx*2+1];
+            int gy=goal_locations[agent_idx*2];
+            int gx=goal_locations[agent_idx*2+1];
+            int goal_loc=gy*map_size[1]+gx;
             // std::cout<<"y: "<<y<<" x: "<<x<<std::endl;
             for (int action_idx=0;action_idx<num_actions;++action_idx) {
                 int dy=action_choices[action_idx*2];
@@ -192,14 +196,13 @@ public:
                 int nx=dx+x;
                 int next_loc = ny*map_size[1]+nx;
 		        int min_heuristic;
-
                 if (
                     ny<0 || ny>=map_size[0] ||
                     nx<0 || nx>=map_size[1] ||
                     h_table.env.map[next_loc]) {
                     min_heuristic=-1;
                 } else {
-                    min_heuristic=h_table.get(agent_idx,next_loc);
+                    min_heuristic=h_table.get(next_loc, goal_loc);
                 }
                 heuristics.push_back((float) min_heuristic);          
             }
@@ -235,7 +238,7 @@ public:
                     sampling
                 );
                 if (!succ) {
-                    std::cerr<<"a bug exists i: "<<i<<" agent_idx: "<<agent_idx<<std::endl;
+                    std::cerr<<"a bug exists i: "<<i<<" agent_idx: "<<agent_idx<<" location: "<<locations[agent_idx*2]<<","<<locations[agent_idx*2+1]<<std::endl;
                     exit(-1);
                 }
             }

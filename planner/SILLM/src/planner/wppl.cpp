@@ -16,7 +16,8 @@ WPPLSolver::WPPLSolver(
 ): 
     num_of_agents(num_of_agents),
     window_size_for_PATH(window_size_for_PATH),
-    window_size_for_EXEC(window_size_for_EXEC) {
+    window_size_for_EXEC(window_size_for_EXEC),
+    use_lns(num_threads>0) {
 
     env = std::make_shared<SharedEnvironment>();
 
@@ -112,11 +113,20 @@ WPPLSolver::WPPLSolver(
 }
 
 std::vector<int> WPPLSolver::solve(
-    std::vector<int> & start_locations,
-    std::vector<int> & goal_locations,
-    bool use_lns,
+    std::vector<int> & start_positions,
+    std::vector<int> & goal_positions,
     double time_limit
 ) {
+    if (start_positions.size()!=num_of_agents) {
+        std::cerr<<"start_positions size doesn't match num_of_agents: "<<start_positions.size()<<" "<<num_of_agents<<std::endl;
+        exit(1);
+    }
+
+    if (goal_positions.size()!=num_of_agents) {
+        std::cerr<<"goal_positions size doesn't match num_of_agents: "<<goal_positions.size()<<" "<<num_of_agents<<std::endl;
+        exit(1);
+    }
+
     int planning_window;
 
     if (use_lns) {
@@ -130,8 +140,9 @@ std::vector<int> WPPLSolver::solve(
     // see env or simulator.
     std::vector<int> action_choices={0,1,1,0,0,-1,-1,0,0,0};
     std::vector<int> map_size={env->rows,env->cols};
-    std::vector<float> priorities;
+    std::vector<float> priorities(env->num_of_agents);
     std::vector<int> locations;
+    std::vector<int> goal_locations;
 
     std::vector<std::vector<int> > paths(env->num_of_agents);
 
@@ -140,18 +151,22 @@ std::vector<int> WPPLSolver::solve(
         // use EPIBT's priority function.
 #ifdef NO_ROT
         float dist=heuristic_table->get(
-            start_locations[agent_idx], 
-            goal_locations[agent_idx]
+            start_positions[agent_idx], 
+            goal_positions[agent_idx]
         );
+        // std::cout<<"agent "<<agent_idx<<" dist: "<<dist<<std::endl;
 #else
         throw std::runtime_error("NO_ROT is not supported now");
 #endif
         float priority = -dist;
-        priorities.push_back(priority);
-        int location=start_locations[agent_idx];
-        locations.push_back(location/env->cols);
-        locations.push_back(location%env->cols);
-        paths[agent_idx].push_back(location);
+        priorities[agent_idx] = priority;
+        int position=start_positions[agent_idx];
+        locations.push_back(position/env->cols);
+        locations.push_back(position%env->cols);
+        int goal_position=goal_positions[agent_idx];
+        goal_locations.push_back(goal_position/env->cols);
+        goal_locations.push_back(goal_position%env->cols);
+        paths[agent_idx].push_back(position);
     }
 
     for (int step=0;step<planning_window;++step) {
@@ -159,6 +174,7 @@ std::vector<int> WPPLSolver::solve(
             *heuristic_table,
             priorities,
             locations,
+            goal_locations,
             action_choices,
             map_size,
             false
@@ -184,6 +200,17 @@ std::vector<int> WPPLSolver::solve(
     if (use_lns) {
         lns->reset();
 
+        std::vector<State> start_states(env->num_of_agents);
+        std::vector<State> goal_states(env->num_of_agents);
+        for (int agent_idx=0;agent_idx<env->num_of_agents;++agent_idx) {
+            // NOTE: the last parameter is orientation, which is not supported for now, so we set it to -1.
+            start_states[agent_idx]=State(start_positions[agent_idx], -1, -1);
+            goal_states[agent_idx]=State(goal_positions[agent_idx], -1, -1);
+        }
+
+        // NOTE: legacy code issue, lns solves the instance
+        instance->set_starts_and_goals(start_states, goal_states);
+
         // copy pibt paths to lns paths
         for (int agent_idx=0;agent_idx<env->num_of_agents;++agent_idx) {
             auto & lns_path=lns->agents[agent_idx].path;
@@ -192,7 +219,7 @@ std::vector<int> WPPLSolver::solve(
             for (int j=0;j<pibt_path.size();++j) {
                 lns_path.nodes.emplace_back(pibt_path[j],-1);
             }
-            lns_path.path_cost=lns->agents[agent_idx].getEstimatedPathLength(lns_path,goal_locations[agent_idx],heuristic_table);
+            lns_path.path_cost=lns->agents[agent_idx].getEstimatedPathLength(lns_path,goal_positions[agent_idx],heuristic_table);
         } 
 
         // TODO(rivers): should subtract other parts

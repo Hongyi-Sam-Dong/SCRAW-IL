@@ -44,10 +44,17 @@ void DiscreteSimulator::set_seed(size_t _seed) {
 
 void DiscreteSimulator::reset() {
     timestep=0;
+
+    // std::cout<<"timestep "<<timestep<<std::endl;
+    
     total_reached=0;
 
     _sample_initial_states();
     _sample_goals(all_agent_idxs);
+
+    // for (int aid=0; aid<n_agents; aid++) {
+    //     std::cout<<"agent "<<aid<<" starts at "<<(positions[aid]/cols)<<","<<(positions[aid]%cols)<<" and has goal "<<(goals[aid]/cols)<<","<<(goals[aid]%cols)<<std::endl;
+    // }
 
 }
 
@@ -58,20 +65,29 @@ void DiscreteSimulator::step(std::vector<int> & actions) {
     
     ++timestep;
 
+    // std::cout<<"timestep "<<timestep<<std::endl;
+
     std::vector<int> next_positions(n_agents, -1);
-    std::vector<int> reached_aids;
     for (int aid=0; aid<n_agents; aid++) {
         int curr_position = positions[aid];
         int movement_idx = actions[aid];
         next_positions[aid] = _move(curr_position, movement_idx);
     }
 
+    // for (int aid=0; aid<n_agents; aid++) {
+    //     std::cout<<"agent "<<aid<<" moves from "<<(positions[aid]/cols)<<","<<(positions[aid]%cols)<<" to "<<(next_positions[aid]/cols)<<","<<(next_positions[aid]%cols)<<" with action "<<actions[aid]<<" and goal "<<(goals[aid]/cols)<<","<<(goals[aid]%cols)<<std::endl;
+    // }
+
     // validate
-    _validate(positions, next_positions);
+    bool validness = _validate(positions, next_positions);
+    if (!validness) {
+        throw std::runtime_error("invalid actions at timestep "+std::to_string(timestep));
+    }
     // update positions to next_positions
     std::swap(positions, next_positions);
 
     // check if agents reach goals
+    std::vector<int> reached_aids;
     for (int aid=0; aid<n_agents; aid++) {
         if (positions[aid]==goals[aid]) {
             ++total_reached;
@@ -79,6 +95,11 @@ void DiscreteSimulator::step(std::vector<int> & actions) {
         }
     }
     _sample_goals(reached_aids);
+
+    // for (int aid: reached_aids) {
+    //     std::cout<<"agent "<<aid<<" reached goal "<<(positions[aid]/cols)<<","<<(positions[aid]%cols)<<" and assigned a new goal "<<(goals[aid]/cols)<<","<<(goals[aid]%cols)<<std::endl;
+    // }
+
 }
 
 int DiscreteSimulator::_move(
@@ -106,13 +127,14 @@ bool DiscreteSimulator::_validate(
     for (int agent_idx=0; agent_idx<n_agents; agent_idx++) {
         int pos = next_positions[agent_idx];
         if (next_positions2agent_idx.count(pos)>0) {
+            std::cout<<"vertex collision between agent "<<agent_idx<<" and agent "<<next_positions2agent_idx[pos]<<" at position "<<(pos/cols)<<","<<(pos%cols)<<std::endl;
             return false;
         }
         next_positions2agent_idx[pos]=agent_idx;
     }
 
     // check edge collision
-    for (int agent_idx=1; agent_idx<n_agents; agent_idx++) {
+    for (int agent_idx=0; agent_idx<n_agents; agent_idx++) {
         int curr_position = curr_positions[agent_idx];
         int next_position = next_positions[agent_idx];
 
@@ -120,9 +142,13 @@ bool DiscreteSimulator::_validate(
         if (iter!=next_positions2agent_idx.end()) {
             // another agent wants to move to the current position of the agent
             int another_agent_idx = iter->second;
+            if (another_agent_idx==agent_idx) {
+                continue;
+            }
             // if another agent's current position is the same as the next position of the agent
             if (curr_positions[another_agent_idx]==next_position) {
                 // cannot swap positions with another agent
+                std::cout<<"edge collision between agent "<<agent_idx<<" and agent "<<another_agent_idx<<" when swapping positions "<<(curr_position/cols)<<","<<(curr_position%cols)<<" and "<<(next_position/cols)<<","<<(next_position%cols)<<std::endl;
                 return false;
             }
         }

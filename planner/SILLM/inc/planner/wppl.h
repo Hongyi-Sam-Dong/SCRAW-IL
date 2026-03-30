@@ -19,6 +19,7 @@ public:
 
     std::shared_ptr<PIBTSolver> pibt_solver;
 
+    bool use_lns; // if not, just single-step pibt
 
     WPPLSolver(
         int rows,
@@ -36,7 +37,6 @@ public:
     std::vector<int> solve(
         std::vector<int> & start_locations,
         std::vector<int> & goal_locations,
-        bool use_lns,
         double time_limit
     );
 

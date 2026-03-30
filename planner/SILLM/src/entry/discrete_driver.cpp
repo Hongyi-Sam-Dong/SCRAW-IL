@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
         ("lns_plan_window", po::value<int>()->default_value(15), "planning window size for LNS")
         ("lns_exec_window", po::value<int>()->default_value(1), "execution window size for LNS")
         ("lns_num_threads,t", po::value<int>()->default_value(1), "number of threads for LNS parallelization")
-        ("lns_max_iters", po::value<int>()->default_value(1000), "maximum number of LNS iterations")
+        ("lns_max_iters", po::value<int>()->default_value(1000), "maximum number of LNS iterations. If lns_max_iters is set, plan_time_limit will be ignored.")
     ;
         
     po::variables_map vm;
@@ -40,8 +40,6 @@ int main(int argc, char** argv) {
 
     // TODO: make map weights configurable
     auto map_weights_ptr = std::make_shared<std::vector<float> >(grid_ptr->map.size()*5, 1.0f);
-
-    bool use_lns = vm["lns_num_threads"].as<int>() >0 && vm["lns_max_iters"].as<int>() > 0;
 
     // TODO: make planner configurable
     auto planner_ptr = std::make_shared<Planner::WPPLSolver>(
@@ -65,14 +63,17 @@ int main(int argc, char** argv) {
         grid_ptr->map
     );
     
+    simulator_ptr->reset();
     for (int step=0; step < vm["sim_steps"].as<int>(); step++) {
         std::vector<int> actions = planner_ptr->solve(
             simulator_ptr->positions,
             simulator_ptr->goals,
-            use_lns, // use_lns
             vm["plan_time_limit"].as<double>() // time_limit
         );
         simulator_ptr->step(actions);
+
+        std::cout<<"step "<<simulator_ptr->timestep<<" throughput "<<(double)simulator_ptr->total_reached/(simulator_ptr->timestep)<<std::endl;
     }
 
+    std::cout<<"final throughput "<<(double)simulator_ptr->total_reached/(simulator_ptr->timestep)<<std::endl;
 }
