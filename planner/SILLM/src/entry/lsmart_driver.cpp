@@ -26,7 +26,7 @@ vector<vector<tuple<int, int, double, int>>> gen_mapf_plan(
     Instance & instance,
     std::shared_ptr<Planner::WPPLSolver> & planner_ptr,
     std::shared_ptr<Simulator::DiscreteSimulator> & simulator_ptr,
-    int sim_steps,
+    int plan_window_size,
     double plan_time_limit
 ) {
 
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
         ("map_fp,m", po::value<std::string>()->required(), "map file path")
         ("num_agents,n", po::value<int>()->required(), "number of agents")
         ("random_seed,r", po::value<size_t>()->default_value(0), "random seed")
-        ("sim_steps", po::value<int>()->default_value(100), "number of steps to simulate")
+        ("plan_window_size", po::value<int>()->default_value(100), "window size of the plan to submit to the server")
         ("plan_time_limit", po::value<double>()->default_value(1.0), "time limit for each planning call")
         ("lns_plan_window", po::value<int>()->default_value(15), "planning window size for LNS")
         ("lns_exec_window", po::value<int>()->default_value(1), "execution window size for LNS. just ignore it for now.")
@@ -191,7 +191,13 @@ int main(int argc, char** argv) {
         // replace the following code with WPPL planner to generate a windowed plan submitted to the server.
         // please refer to the discrete_driver.cpp for an example of how to simulate,
         // and the following PBS code for what everythin means and how to submit a plan to the server.
-        auto new_mapf_plan = gen_mapf_plan(instance, planner_ptr, simulator_ptr, vm["sim_steps"].as<int>(), vm["plan_time_limit"].as<double>());
+        auto new_mapf_plan = gen_mapf_plan(
+            instance, 
+            planner_ptr, 
+            simulator_ptr, 
+            vm["plan_window_size"].as<int>(), 
+            vm["plan_time_limit"].as<double>()
+        );
 
         // Send new plan
         json stats = {{"n_mapf_calls", n_mapf_calls},
