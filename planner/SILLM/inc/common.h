@@ -73,7 +73,7 @@ using json = nlohmann::json;
 
 // bool isSamePath(const Path& p1, const Path& p2);
 
-// bool congested(const vector<vector<tuple<int, int, double, int>>>& new_plan);
+bool congested(const vector<vector<tuple<int, int, double, int>>>& new_plan);
 
 // Only for three-tuples of std::hash-able types for simplicity.
 // You can of course template this struct to allow other hash functions

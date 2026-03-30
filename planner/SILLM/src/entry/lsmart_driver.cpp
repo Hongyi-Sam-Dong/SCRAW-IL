@@ -18,6 +18,20 @@
 // #include "PBS.h"
 #include "common.h"
 
+#include "Grid.h"
+#include "planner/wppl.h"
+#include "DiscreteSimulator.h"
+
+vector<vector<tuple<int, int, double, int>>> gen_mapf_plan(
+    Instance & instance,
+    std::shared_ptr<Planner::WPPLSolver> & planner_ptr,
+    std::shared_ptr<Simulator::DiscreteSimulator> & simulator_ptr,
+    int sim_steps,
+    double plan_time_limit
+) {
+
+}
+
 /* Main function */
 int main(int argc, char** argv) {
     std::cout << "Starting SILLM Driver..." << std::endl;
@@ -25,20 +39,23 @@ int main(int argc, char** argv) {
     // Declare the supported options.
     po::options_description desc("Allowed options");
     // clang-format off
-	desc.add_options()
-		("help", "produce help message")
-
-		// params for the input instance and experiment settings
-		("map,m", po::value<string>()->required(), "input file for map")
-		("output,o", po::value<string>(), "output file for statistics")
-		("outputPaths", po::value<string>(), "output file for paths")
-		("agentNum,k", po::value<int>()->default_value(0), "number of agents")
-		("cutoffTime,t", po::value<double>()->default_value(3), "cutoff time (seconds)")
+    desc.add_options()
+        ("help", "produce help message")
+        // ("inputFolder", po::value<std::string>()->default_value("."), "input folder")
+        ("ip", po::value<std::string>()->default_value("127.0.0.1"), "IP address")
+        ("port", po::value<int>()->required(), "port number")
 		("screen,s", po::value<int>()->default_value(1), "screen option (0: none; 1: results; 2:all)")
-		("stats", po::value<bool>()->default_value(false), "write to files some detailed statistics")
-        ("portNum", po::value<int>()->default_value(8080), "port number for the server")
-		("sipp", po::value<bool>()->default_value(1), "using SIPP as the low-level solver")
-        ("seed", po::value<int>()->default_value(0), "random seed");
+        ("map_fp,m", po::value<std::string>()->required(), "map file path")
+        ("num_agents,n", po::value<int>()->required(), "number of agents")
+        ("random_seed,r", po::value<size_t>()->default_value(0), "random seed")
+        ("sim_steps", po::value<int>()->default_value(100), "number of steps to simulate")
+        ("plan_time_limit", po::value<double>()->default_value(1.0), "time limit for each planning call")
+        ("lns_plan_window", po::value<int>()->default_value(15), "planning window size for LNS")
+        ("lns_exec_window", po::value<int>()->default_value(1), "execution window size for LNS. just ignore it for now.")
+        ("lns_num_threads,t", po::value<int>()->default_value(1), "number of threads for LNS parallelization")
+        ("lns_max_iters", po::value<int>()->default_value(1000), "maximum number of LNS iterations. If lns_max_iters is set, plan_time_limit will be ignored.")
+    ;
+        
     // clang-format on
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -50,22 +67,54 @@ int main(int argc, char** argv) {
 
     po::notify(vm);
 
-    int seed = vm["seed"].as<int>();
+    int seed = vm["random_seed"].as<int>();
     srand(seed);  // Set the random seed for reproducibility
 
     // Set up logger
     auto console_logger = spdlog::default_logger()->clone("Planner");
     spdlog::set_default_logger(console_logger);
 
+    // build the simulator and planner
+    int num_agents = vm["num_agents"].as<int>();
+    std::string map_fp = vm["map_fp"].as<std::string>();
+    auto grid_ptr = std::make_shared<Grid>(map_fp);
+
+    // TODO: make map weights configurable
+    auto map_weights_ptr = std::make_shared<std::vector<float> >(grid_ptr->map.size()*5, 1.0f);
+
+    // TODO: make planner configurable
+    auto planner_ptr = std::make_shared<Planner::WPPLSolver>(
+        grid_ptr->rows,
+        grid_ptr->cols,
+        grid_ptr->map,
+        *map_weights_ptr,
+        num_agents,
+        vm["lns_plan_window"].as<int>(), // window_size_for_PATH
+        vm["lns_exec_window"].as<int>(), // window_size_for_EXEC
+        vm["lns_num_threads"].as<int>(), // num_threads
+        vm["lns_max_iters"].as<int>(), // max_iterations
+        false // verbose
+    );
+
+    // one shot to generate windowed plan
+    const bool one_shot = true;
+    auto simulator_ptr = std::make_shared<Simulator::DiscreteSimulator>(
+        vm["random_seed"].as<size_t>(),
+        num_agents,
+        grid_ptr->rows,
+        grid_ptr->cols,
+        grid_ptr->map,
+        one_shot
+    );
+
     ///////////////////////////////////////////////////////////////////////////
     // int prev_last_task_id = 0;  // last task id from the previous iteration
     // vector<Task> prev_goal_locs;
     set<int> finished_tasks_id;
     int screen = vm["screen"].as<int>();
-    int num_agents = vm["agentNum"].as<int>();
 
     // Create a graph, heuristic will be computed only once in the graph
-    auto graph = make_shared<Graph>(vm["map"].as<string>(), screen);
+    auto graph = make_shared<Graph>(map_fp, screen);
 
     // Stats
     int n_mapf_calls = 0;        // number of MAPF calls
@@ -134,33 +183,26 @@ int main(int argc, char** argv) {
         instance.loadAgents(mapf_instance);
 
         instance.printAgents();
-        // PBS pbs(instance, vm["sipp"].as<bool>(), screen);
+
         // run
-    //     double runtime = 0;
-    //     bool success = false;
-    //     double runtime_limit = vm["cutoffTime"].as<double>();
-    //     int fail_count = 0;
-    //     n_mapf_calls += 1;
-    //     success = pbs.solve(runtime_limit);
-    //     vector<vector<tuple<int, int, double, int>>> new_mapf_plan =
-    //         pbs.getPaths();
-    //     if (!success) {
-    //         n_rule_based_calls += 1;
-    //     }
+        n_mapf_calls += 1;
 
-    //     pbs.clearSearchEngines();
-    //     pbs.clear();
+        // TODO: write a function like gen_mapf_plan to generate a windowed plan, and submit the plan to the server.
+        // replace the following code with WPPL planner to generate a windowed plan submitted to the server.
+        // please refer to the discrete_driver.cpp for an example of how to simulate,
+        // and the following PBS code for what everythin means and how to submit a plan to the server.
+        auto new_mapf_plan = gen_mapf_plan(instance, planner_ptr, simulator_ptr, vm["sim_steps"].as<int>(), vm["plan_time_limit"].as<double>());
 
-    //     // Send new plan
-    //     json stats = {{"n_mapf_calls", n_mapf_calls},
-    //                   {"n_rule_based_calls", n_rule_based_calls}};
-    //     json new_plan_json = {
-    //         {"success", success},
-    //         {"plan", new_mapf_plan},
-    //         {"congested", congested(new_mapf_plan)},
-    //         {"stats", stats.dump()},
-    //     };
-    //     client.call("add_plan", new_plan_json.dump());
+        // Send new plan
+        json stats = {{"n_mapf_calls", n_mapf_calls},
+                      {"n_rule_based_calls", n_rule_based_calls}};
+        json new_plan_json = {
+            {"success", true},
+            {"plan", new_mapf_plan},
+            {"congested", congested(new_mapf_plan)},
+            {"stats", stats.dump()},
+        };
+        client.call("add_plan", new_plan_json.dump());
     }
 
     cout << "Planner finished!" << endl;

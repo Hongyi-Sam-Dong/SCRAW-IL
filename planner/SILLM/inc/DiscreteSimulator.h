@@ -25,10 +25,10 @@ public:
     std::vector<int> map;
     std::vector<int> empty_locations;
 
+    // simulator state except rng
     int timestep=0;
     std::vector<int> positions;
     std::vector<int> goals;
-
     int total_reached=0;
 
     bool one_shot=false;

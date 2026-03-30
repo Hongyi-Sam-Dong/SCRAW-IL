@@ -35,6 +35,7 @@ int main(int argc, char** argv) {
 
     po::notify(vm);
 
+    // build the simulator and planner
     auto grid_ptr = std::make_shared<Grid>(vm["map_fp"].as<std::string>());
     int num_agents = vm["num_agents"].as<int>();
 
@@ -65,6 +66,7 @@ int main(int argc, char** argv) {
         one_shot // means not one_shot
     );
     
+    // simulation
     simulator_ptr->reset();
     for (int step=0; step < vm["sim_steps"].as<int>(); step++) {
         std::vector<int> actions = planner_ptr->solve(
