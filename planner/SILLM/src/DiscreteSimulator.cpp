@@ -7,14 +7,16 @@ DiscreteSimulator::DiscreteSimulator(
     int _n_agents,
     int _rows,
     int _cols,
-    std::vector<int> & _map
+    std::vector<int> & _map,
+    bool _one_shot
 ): 
     seed(_seed),
     rng(_seed),
     n_agents(_n_agents),
     rows(_rows),
     cols(_cols),
-    map(_map) {
+    map(_map),
+    one_shot(_one_shot) {
 
     // sanity check
     if (map.size()!=rows*cols) {    
@@ -58,6 +60,26 @@ void DiscreteSimulator::reset() {
 
 }
 
+void DiscreteSimulator::reset_one_shot(std::vector<int> & start_positions, std::vector<int> & goal_positions) {
+    if (start_positions.size()!=n_agents) {
+        throw std::runtime_error("wrong start_positions size "+std::to_string(start_positions.size())+" "+std::to_string(n_agents));
+    }
+
+    if (goal_positions.size()!=n_agents) {
+        throw std::runtime_error("wrong goal_positions size "+std::to_string(goal_positions.size())+" "+std::to_string(n_agents));
+    }
+
+    one_shot=true;
+    
+    timestep=0;
+    total_reached=0;
+
+    for (int aid=0; aid<n_agents; aid++) {
+        positions[aid] = start_positions[aid];
+        goals[aid] = goal_positions[aid];
+    }
+}
+
 void DiscreteSimulator::step(std::vector<int> & actions) {
     if (actions.size()!=n_agents) {
         throw std::runtime_error("wrong actions size "+std::to_string(actions.size())+" "+std::to_string(n_agents));
@@ -87,14 +109,25 @@ void DiscreteSimulator::step(std::vector<int> & actions) {
     std::swap(positions, next_positions);
 
     // check if agents reach goals
-    std::vector<int> reached_aids;
-    for (int aid=0; aid<n_agents; aid++) {
-        if (positions[aid]==goals[aid]) {
-            ++total_reached;
-            reached_aids.push_back(aid);
+    if (!one_shot) {
+        std::vector<int> reached_aids;
+        for (int aid=0; aid<n_agents; aid++) {
+            if (positions[aid]==goals[aid]) {
+                ++total_reached;
+                reached_aids.push_back(aid);
+            }
+        }
+        _sample_goals(reached_aids);
+    } else {
+        // TODO: keep goals unchanged for one_shot setting. however, this is probably problematic in the lifelong setting.
+        // we should consider a better design later.
+        total_reached=0;
+        for (int aid=0; aid<n_agents; aid++) {
+            if (positions[aid]==goals[aid]) {
+                ++total_reached;
+            }
         }
     }
-    _sample_goals(reached_aids);
 
     // for (int aid: reached_aids) {
     //     std::cout<<"agent "<<aid<<" reached goal "<<(positions[aid]/cols)<<","<<(positions[aid]%cols)<<" and assigned a new goal "<<(goals[aid]/cols)<<","<<(goals[aid]%cols)<<std::endl;

@@ -55,12 +55,14 @@ int main(int argc, char** argv) {
         false // verbose
     );
 
+    const bool one_shot = false;
     auto simulator_ptr = std::make_shared<Simulator::DiscreteSimulator>(
         vm["random_seed"].as<size_t>(),
         num_agents,
         grid_ptr->rows,
         grid_ptr->cols,
-        grid_ptr->map
+        grid_ptr->map,
+        one_shot // means not one_shot
     );
     
     simulator_ptr->reset();

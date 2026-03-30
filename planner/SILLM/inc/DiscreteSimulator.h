@@ -10,7 +10,8 @@ public:
         int _n_agents,
         int _rows,
         int _cols,
-        std::vector<int> & _map
+        std::vector<int> & _map,
+        bool _one_shot
     );
 
     size_t seed;
@@ -30,6 +31,8 @@ public:
 
     int total_reached=0;
 
+    bool one_shot=false;
+
     // TODO: there are multiple definitions for movements
     // we should unify them in common.h for example.
     const std::vector<std::pair<int,int> > movements = {
@@ -43,6 +46,7 @@ public:
     void set_seed(size_t _seed);
 
     void reset();
+    void reset_one_shot(std::vector<int> & start_positions, std::vector<int> & goal_positions);
     void step(std::vector<int> & actions);
 
     int _move(int curr_position, int movement_idx);
