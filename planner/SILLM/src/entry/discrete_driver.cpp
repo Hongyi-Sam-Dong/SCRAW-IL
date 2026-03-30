@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
         ("map_fp,m", po::value<std::string>()->required(), "map file path")
         ("num_agents,n", po::value<int>()->required(), "number of agents")
         ("random_seed,r", po::value<size_t>()->default_value(0), "random seed")
-        ("sim_steps,s", po::value<int>()->default_value(100), "number of steps to simulate")
+        ("sim_steps,s", po::value<int>()->default_value(10), "number of steps to simulate")
         ("plan_time_limit", po::value<double>()->default_value(1.0), "time limit for each planning call")
         ("lns_plan_window", po::value<int>()->default_value(15), "planning window size for LNS")
         ("lns_exec_window", po::value<int>()->default_value(1), "execution window size for LNS")
