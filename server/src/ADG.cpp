@@ -707,6 +707,35 @@ json ADG::getADGStats() {
     return result;
 }
 
+json ADG::getVisualizationTrace() {
+    json result;
+    result["num_robots"] = num_robots;
+
+    vector<vector<tuple<double, double, double, int>>> robot_paths(num_robots);
+    for (int k = 0; k < num_robots; k++) {
+        robot_paths[k].push_back({init_locs[k].position.second,
+                                  init_locs[k].position.first, 0.0, -1});
+    }
+
+    if (graph.empty()) {
+        result["robot_paths"] = robot_paths;
+        return result;
+    }
+
+    for (int k = 0; k < num_robots; k++) {
+        for (int j = 0; j < finished_node_idx[k]; j++) {
+            auto action = graph[k][j].action;
+            robot_paths[k].push_back({action.goal.second, action.goal.first,
+                                      action.orientation, action.task_id});
+        }
+    }
+
+    result["robot_paths"] = robot_paths;
+    result["tick_robot_states"] = tick_robot_states;
+    result["tick_robot_goals"] = tick_robot_goals;
+    return result;
+}
+
 void ADG::showGraph() {
     for (size_t i = 0; i < numRobots(); i++) {
         // if (graph[i].size() - finished_node_idx[i] < 5) {
@@ -895,4 +924,19 @@ void ADG::recordStatsPerTick() {
     this->stats_per_tick.portion_idle_robots.push_back(
         static_cast<double>(n_robots_idle) / this->num_robots);
     // this->stats_per_tick.n_total_nodes.push_back(n_total_nodes);
+
+    vector<tuple<double, double, double, int>> curr_tick_states;
+    curr_tick_states.reserve(this->num_robots);
+    for (int k = 0; k < this->num_robots; k++) {
+        curr_tick_states.emplace_back(robot_states[k].position.second,
+                                      robot_states[k].position.first,
+                                      static_cast<double>(robot_states[k].orient),
+                                      -1);
+    }
+    this->tick_robot_states.push_back(curr_tick_states);
+}
+
+void ADG::recordTickGoals(
+    const vector<tuple<double, double, int>>& current_goals) {
+    this->tick_robot_goals.push_back(current_goals);
 }

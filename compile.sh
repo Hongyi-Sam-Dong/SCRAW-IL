@@ -37,7 +37,7 @@ compile_client() {
     rm -rf build
     mkdir build
     cd build
-    cmake ..
+    CC=gcc CXX=g++ cmake ..
     make -j $cpuCores
 }
 

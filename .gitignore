@@ -2,6 +2,9 @@
 .DS_Store
 .vscode
 */build
+/.pymodules
+/client/build*
+/.codex
 */cmake
 ./server/ADG/ADG
 ./server/ADG/ADG_client

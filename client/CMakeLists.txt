@@ -13,8 +13,9 @@ set(CMAKE_MACOSX_RPATH 0)
 set(CMAKE_MODULE_PATH $ENV{CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 set(CMAKE_PREFIX_PATH $ENV{CMAKE_PREFIX_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 
-# Use C++20
-set(CMAKE_CXX_STANDARD 20)
+# Keep client plugins on a conservative standard so ARGoS can discover them
+# reliably at runtime, while still supporting std::clamp in the client code.
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 

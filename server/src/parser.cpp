@@ -186,9 +186,13 @@ vector<vector<Action>> PlanParser::StepsToActions(
                 processedAction.nodeID = node_id;
                 Action accesoray_action = processedAction;
 
-                // Task is considered as complete when the accesoray action is
-                // completed
-                // accesoray_action.task_id = raw_steps[i][j].task_id;
+                // When a task is reached via a move, mark the second half of
+                // that move as the completion action. This avoids relying on a
+                // separate station node that can be preempted by the next
+                // planning cycle before it finishes executing.
+                if (raw_steps[i][j].task_id >= 0) {
+                    accesoray_action.task_id = raw_steps[i][j].task_id;
+                }
 
                 if (processedAction.start == processedAction.goal &&
                     raw_steps[i][j - 1].orientation !=
@@ -230,8 +234,11 @@ vector<vector<Action>> PlanParser::StepsToActions(
                 }
                 node_id++;
 
-                // Add special action for goal arrival
-                if (raw_steps[i][j].task_id >= 0) {
+                // Add a special station action only when the goal is reached
+                // without a move action. For move arrivals, the completion is
+                // attached to the arrival move above.
+                if (raw_steps[i][j].task_id >= 0 &&
+                    processedAction.type != 'M') {
                     // cout << "Adding goal action for agent " << i
                     //      << ", task_id: " << raw_steps[i][j].task_id
                     //      << endl;

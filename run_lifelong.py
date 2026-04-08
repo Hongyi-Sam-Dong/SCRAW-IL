@@ -413,12 +413,12 @@ def run_lifelong_argos(
         elif planner == "SILLM":
             planner_command = [
                 sillm_path,
-                f"--map={map_filepath}",
-                f"--agentNum={num_agents}",
-                f"--portNum={port_num}",
-                f"--seed={seed}",
+                f"--map_fp={map_filepath}",
+                f"--num_agents={num_agents}",
+                f"--port={port_num}",
+                f"--random_seed={seed}",
                 f"--screen={screen}",
-                f"--cutoffTime={cutoffTime}",
+                f"--plan_time_limit={cutoffTime}",
             ]
         else:
             logger.error(f"Unknown planner: {planner}")

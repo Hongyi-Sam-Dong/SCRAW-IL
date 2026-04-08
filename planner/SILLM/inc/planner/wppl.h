@@ -40,6 +40,8 @@ public:
         double time_limit
     );
 
+    int get_sum_of_cost() const;
+
 }; 
     
 

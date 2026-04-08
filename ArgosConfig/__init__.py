@@ -11,6 +11,7 @@ PBS_EXE = "planner/PBS/build/pbs"
 TPBS_EXE = "planner/Transient_PBS/build/tpbs"
 RHCR_EXE = "planner/RHCR/build/lifelong"
 MASS_EXE = "planner/MASS/MASS"
+SILLM_EXE = "planner/SILLM/build/lsmart_driver"
 FOOTBOT_DIFFUSION_CONTROLLER_LIB = "client/build/controllers/footbot_diffusion/libfootbot_diffusion"
 TRAJECTORY_LOOP_FUNCTIONS_LIB = "client/build/loop_functions/trajectory_loop_functions/libtrajectory_loop_functions"
 

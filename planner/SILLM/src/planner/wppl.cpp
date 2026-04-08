@@ -31,8 +31,6 @@ WPPLSolver::WPPLSolver(
         exit(-1);
     }
 
-    // auto grid=std::make_shared<Grid>(map_path);
-    env=std::make_shared<SharedEnvironment>();
     env->map=map;
     env->rows=rows;
     env->cols=cols;  
@@ -48,14 +46,8 @@ WPPLSolver::WPPLSolver(
         exit(1);
     }
 
-#ifdef NO_ROT
-        bool consider_rotation=false;
-#else
-        bool consider_rotation=true;
-        throw std::runtime_error("NO_ROT is not supported now, mainly because the pibt we used here!");
-#endif
+    bool consider_rotation=false;
 
-    // TODO: use env.get is dangerous! legacy code!
     heuristic_table=std::make_shared<HeuristicTable>(env.get(), map_weights, consider_rotation);
     heuristic_table->compute_weighted_heuristics();
 
@@ -126,7 +118,6 @@ std::vector<int> WPPLSolver::solve(
         std::cerr<<"goal_positions size doesn't match num_of_agents: "<<goal_positions.size()<<" "<<num_of_agents<<std::endl;
         exit(1);
     }
-
     int planning_window;
 
     if (use_lns) {
@@ -149,15 +140,14 @@ std::vector<int> WPPLSolver::solve(
     // TODO: disable agents as in the original WPPL paper.
     for (int agent_idx=0;agent_idx<env->num_of_agents;++agent_idx) {
         // use EPIBT's priority function.
-#ifdef NO_ROT
+        // #ifdef NO_ROT
         float dist=heuristic_table->get(
             start_positions[agent_idx], 
             goal_positions[agent_idx]
         );
-        // std::cout<<"agent "<<agent_idx<<" dist: "<<dist<<std::endl;
-#else
-        throw std::runtime_error("NO_ROT is not supported now");
-#endif
+        // #else
+        //         throw std::runtime_error("NO_ROT is not supported now");
+        // #endif
         float priority = -dist;
         priorities[agent_idx] = priority;
         int position=start_positions[agent_idx];
@@ -168,7 +158,6 @@ std::vector<int> WPPLSolver::solve(
         goal_locations.push_back(goal_position%env->cols);
         paths[agent_idx].push_back(position);
     }
-
     for (int step=0;step<planning_window;++step) {
         std::vector<int> _actions=pibt_solver->solve(
             *heuristic_table,
@@ -179,7 +168,6 @@ std::vector<int> WPPLSolver::solve(
             map_size,
             false
         );
-
         // take actions
         for (int agent_idx=0;agent_idx<env->num_of_agents;++agent_idx) {
             int y=locations[agent_idx*2];
@@ -272,6 +260,13 @@ std::vector<int> WPPLSolver::solve(
     }
 
     return actions;
+}
+
+int WPPLSolver::get_sum_of_cost() const {
+    if (!use_lns || lns == nullptr) {
+        return -1;
+    }
+    return static_cast<int>(std::lround(lns->sum_of_costs));
 }
 
 };

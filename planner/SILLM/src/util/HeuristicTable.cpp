@@ -210,6 +210,13 @@ float HeuristicTable::get(int loc1, int loc2) {
         exit(-1);
     }
 
+    if (loc1 < 0 || loc1 >= env.map.size() || loc2 < 0 || loc2 >= env.map.size()) {
+        std::cerr << "HeuristicTable::get invalid location range loc1=" << loc1
+                  << " loc2=" << loc2 << " env_map_size=" << env.map.size()
+                  << std::endl;
+        exit(-1);
+    }
+
     int loc_idx1=loc_idxs[loc1];
     int loc_idx2=loc_idxs[loc2];
 

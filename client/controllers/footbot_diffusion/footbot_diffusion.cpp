@@ -4,6 +4,7 @@
 #include <argos3/core/utility/configuration/argos_configuration.h>
 /* 2D vector definition */
 #include <argos3/core/utility/math/vector3.h>
+#include <thread>
 
 /****************************************/
 /****************************************/

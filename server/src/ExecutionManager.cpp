@@ -1,5 +1,7 @@
 #include "ExecutionManager.h"
 
+#include <boost/filesystem.hpp>
+
 ExecutionManager::ExecutionManager(
     const boost::program_options::variables_map vm)
     : _vm(vm),
@@ -244,6 +246,24 @@ void ExecutionManager::saveStats() {
         stats << result.dump(4);  // Pretty print with 4 spaces
 
         spdlog::info("Statistics written to {}", output_filename);
+
+        boost::filesystem::path output_path(output_filename);
+        boost::filesystem::path vis_path;
+        if (output_path.has_stem()) {
+            vis_path = output_path.parent_path() /
+                       (output_path.stem().string() + "_vis.json");
+        } else {
+            vis_path = boost::filesystem::path(output_filename + "_vis.json");
+        }
+
+        ofstream vis_trace(vis_path.string());
+        json vis_result = this->adg->getVisualizationTrace();
+        vis_result["throughput"] = throughput;
+        if (result.contains("sum_of_cost")) {
+            vis_result["sum_of_cost"] = result["sum_of_cost"];
+        }
+        vis_trace << vis_result.dump(4);
+        spdlog::info("Visualization trace written to {}", vis_path.string());
     }
 }
 
@@ -626,4 +646,23 @@ void ExecutionManager::recordStatsPerTick() {
 
     // Record ADG stats per tick
     this->adg->recordStatsPerTick();
+    if (this->task_assigner != nullptr) {
+        vector<tuple<double, double, int>> current_goals;
+        auto goal_locations = this->task_assigner->getGoalLocations();
+        current_goals.reserve(this->numRobots);
+        for (int k = 0; k < this->numRobots; k++) {
+            if (k < static_cast<int>(goal_locations.size()) &&
+                !goal_locations[k].empty()) {
+                const auto& goal = goal_locations[k].front();
+                current_goals.emplace_back(
+                    this->G.getRowCoordinate(goal.location),
+                    this->G.getColCoordinate(goal.location),
+                    goal.id
+                );
+            } else {
+                current_goals.emplace_back(-1.0, -1.0, -1);
+            }
+        }
+        this->adg->recordTickGoals(current_goals);
+    }
 }

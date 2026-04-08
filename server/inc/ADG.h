@@ -85,6 +85,7 @@ public:
     bool getAvailableNodes(int robot_id, vector<int>& available_nodes);
     bool updateFinishedNode(int robot_id, int node_id);
     json getADGStats();
+    json getVisualizationTrace();
     // void setEnqueueNodes(int robot_id, vector<int>& enqueue_nodes);
     vector<robotState> computeCommitCut();
     void addMAPFPlan(const vector<vector<Action>>& plans);
@@ -150,6 +151,8 @@ public:
     }
 
     void recordStatsPerTick();
+    void recordTickGoals(
+        const vector<tuple<double, double, int>>& current_goals);
 
 private:
     void printActions(
@@ -207,4 +210,6 @@ private:
     int n_finished_tasks = 0;
     int n_finished_backup_tasks = 0;
     ADG_STATS stats_per_tick;
+    vector<vector<tuple<double, double, double, int>>> tick_robot_states;
+    vector<vector<tuple<double, double, int>>> tick_robot_goals;
 };
